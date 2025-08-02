@@ -1,12 +1,15 @@
 import {
   Calendar,
+  ChartBarIcon,
   Home,
   Inbox,
+  LayoutDashboard,
   MailCheckIcon,
   MailIcon,
   MailQuestionMark,
   MailsIcon,
   Search,
+  Section,
   Settings,
 } from "lucide-react";
 
@@ -16,10 +19,12 @@ import {
   SidebarGroup,
   SidebarGroupContent,
   SidebarGroupLabel,
+  SidebarHeader,
   SidebarMenu,
   SidebarMenuButton,
   SidebarMenuItem,
 } from "@/components/ui/sidebar";
+
 
 // Menu items.
 const items = [
@@ -43,7 +48,33 @@ const items = [
 export function AppSidebar() {
   return (
     <Sidebar>
+      <SidebarHeader>
+        <div className="w-full flex items-center justify-center h-11">
+          <h1 className="text-2xl">Eloquent</h1>
+        </div>
+      </SidebarHeader>
       <SidebarContent>
+        <SidebarGroup>
+            <SidebarGroupLabel>
+                Main features
+            </SidebarGroupLabel>
+          <SidebarMenu>
+            <SidebarMenuItem>
+              <SidebarMenuButton asChild>
+                <a href="#">
+                    <LayoutDashboard />
+                    <span>Dashboard</span>
+                </a>
+              </SidebarMenuButton>
+              <SidebarMenuButton asChild>
+                <a href="#">
+                    <ChartBarIcon />
+                    <span>Analytics</span>
+                </a>
+              </SidebarMenuButton>
+            </SidebarMenuItem>
+          </SidebarMenu>
+        </SidebarGroup>
         <SidebarGroup>
           <SidebarGroupLabel>Inboxes</SidebarGroupLabel>
           <SidebarGroupContent>
