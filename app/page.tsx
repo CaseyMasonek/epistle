@@ -21,6 +21,8 @@ import {
 import { MoveLeftIcon } from "lucide-react";
 import { SidebarProvider, SidebarTrigger } from "@/components/ui/sidebar";
 import { AppSidebar } from "@/components/app-sidebar";
+import parseMessage from "gmail-api-parse-message";
+import ShadowHtml from "@/components/shadow-html";
 
 export default () => (
   <SessionProvider>
@@ -34,6 +36,8 @@ type Email = {
   labelIds: string[];
   headers: { name: string; value: string }[];
   body: { body: { data: string }; mimeType: string }[];
+  textPlain: string;
+  textHtml: string;
 };
 
 function decodeBase64Url(str: string) {
@@ -50,6 +54,10 @@ function formatDate(str: string) {
 
   if (amPm == "PM" && date.getHours() > 12) {
     hours = hours - 12;
+  }
+
+  if (hours == 0) {
+    hours = 12;
   }
 
   return `${
@@ -107,13 +115,15 @@ function HomePage() {
           );
           const detail = await detailRes.json();
 
-          console.log(detail);
+          console.log(detail, parseMessage(detail));
 
           return {
             id: detail.id,
             snippet: detail.snippet,
             headers: detail.payload.headers,
             body: detail.payload.parts,
+            textPlain: parseMessage(detail).textPlain,
+            textHtml: parseMessage(detail).textHtml,
           };
         })
       );
@@ -125,8 +135,6 @@ function HomePage() {
 
     fetchEmails();
   }, [session?.accessToken]);
-
-  useEffect(() => console.log(selectedEmail), [selectedEmail]);
 
   return (
     <SidebarProvider>
@@ -154,7 +162,7 @@ function HomePage() {
                     <>
                       <div
                         key={email.id}
-                        className="gap-y-0.5 pl-3 hover:bg-zinc-800 h-fit p-3 rounded-md relative"
+                        className="gap-y-0.5 pl-3 hover:bg-accent h-fit p-3 rounded-md relative"
                         onClick={() => setSelectedEmail(email)}
                       >
                         <h4 className="text-sm leading-none font-medium">
@@ -187,7 +195,7 @@ function HomePage() {
                         ?.value ?? "(No subject)"}
                     </h1>
                     <Separator className="my-4" />
-                    {selectedEmail.body.map((part) => renderPart(part))}
+                    <ShadowHtml html={selectedEmail.textHtml} />
                   </div>
                 )}
               </CardContent>

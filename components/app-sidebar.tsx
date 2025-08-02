@@ -1,4 +1,14 @@
-import { Calendar, Home, Inbox, MailCheckIcon, MailIcon, MailQuestionMark, MailsIcon, Search, Settings } from "lucide-react"
+import {
+  Calendar,
+  Home,
+  Inbox,
+  MailCheckIcon,
+  MailIcon,
+  MailQuestionMark,
+  MailsIcon,
+  Search,
+  Settings,
+} from "lucide-react";
 
 import {
   Sidebar,
@@ -9,7 +19,7 @@ import {
   SidebarMenu,
   SidebarMenuButton,
   SidebarMenuItem,
-} from "@/components/ui/sidebar"
+} from "@/components/ui/sidebar";
 
 // Menu items.
 const items = [
@@ -28,16 +38,14 @@ const items = [
     url: "#",
     icon: MailQuestionMark,
   },
-]
+];
 
 export function AppSidebar() {
   return (
     <Sidebar>
       <SidebarContent>
         <SidebarGroup>
-          <SidebarGroupLabel>
-            Epistle
-        </SidebarGroupLabel>
+          <SidebarGroupLabel>Inboxes</SidebarGroupLabel>
           <SidebarGroupContent>
             <SidebarMenu>
               {items.map((item) => (
@@ -55,5 +63,5 @@ export function AppSidebar() {
         </SidebarGroup>
       </SidebarContent>
     </Sidebar>
-  )
+  );
 }
