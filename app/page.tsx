@@ -18,12 +18,13 @@ import {
   ResizablePanel,
   ResizablePanelGroup,
 } from "@/components/ui/resizable";
-import { MoveLeftIcon } from "lucide-react";
+import { MoveLeftIcon, UserCircle2, UserIcon } from "lucide-react";
 import { SidebarProvider, SidebarTrigger } from "@/components/ui/sidebar";
 import { AppSidebar } from "@/components/app-sidebar";
 import parseMessage from "gmail-api-parse-message";
 import ShadowHtml from "@/components/shadow-html";
 import Image from "next/image";
+import { Avatar, AvatarFallback } from "@radix-ui/react-avatar";
 
 export default () => (
   <SessionProvider>
@@ -35,8 +36,7 @@ export type Email = {
   id: string;
   snippet: string;
   labelIds: string[];
-  headers: { name: string; value: string }[];
-  body: { body: { data: string }; mimeType: string }[];
+  headers: { from: string; to: string; date: string; subject: string };
   textPlain: string;
   textHtml: string;
   attachments: {
@@ -52,6 +52,8 @@ export type Email = {
     size: number;
     attachmentId: string;
   }[];
+  threadMembers: Email[];
+  threadId: string;
 };
 
 function formatDate(str: string) {
@@ -80,7 +82,7 @@ function HomePage() {
   const { data: session, status } = useSession();
   const [emails, setEmails] = useState<Email[]>([]);
   const [selectedEmail, setSelectedEmail] = useState<Email>();
-  const emailBox = useRef<HTMLDivElement>(null)
+  const emailBox = useRef<HTMLDivElement>(null);
 
   // Authorization
   useEffect(() => {
@@ -90,12 +92,12 @@ function HomePage() {
   useEffect(() => {
     if (!session?.accessToken) return;
 
-    const fetchEmails = async () => {
-      const headers = {
-        Authorization: `Bearer ${session.accessToken}`,
-        Accept: "application/json",
-      };
+    const headers = {
+      Authorization: `Bearer ${session.accessToken}`,
+      Accept: "application/json",
+    };
 
+    const fetchEmails = async () => {
       const res = await fetch(
         "https://gmail.googleapis.com/gmail/v1/users/me/messages?maxResults=20",
         { headers }
@@ -104,7 +106,7 @@ function HomePage() {
       const messages = list.messages || [];
 
       const detailedEmails = await Promise.all(
-        messages.map(async ({ id }: { id: string }) => {
+        messages.map(async ({ id }: { id: string }): Promise<Email | []> => {
           const detailRes = await fetch(
             `https://gmail.googleapis.com/gmail/v1/users/me/messages/${id}?format=full`,
             { headers }
@@ -112,45 +114,91 @@ function HomePage() {
           const detail = await detailRes.json();
           const parsed = parseMessage(detail);
 
-          console.log(detail, parsed);
+          const threadId = parsed.threadId;
 
-          return {
+          const threadRes = await fetch(
+            `https://gmail.googleapis.com/gmail/v1/users/me/threads/${threadId}`,
+            { headers }
+          );
+          const thread = await threadRes.json();
+
+          console.log(detail, parsed, "thread", thread);
+          console.log(parsed.snippet, parsed.historyId, thread.historyId);
+
+          const newestMessageId = thread.messages.find(
+            (t: any) => t.historyId == thread.historyId
+          ).id;
+
+          if (parsed.id != newestMessageId) {
+            return [];
+          }
+
+          const email: Email = {
             id: detail.id,
             snippet: detail.snippet,
-            headers: detail.payload.headers,
-            body: detail.payload.parts,
+            headers: parsed.headers,
             textPlain: parsed.textPlain,
             textHtml: parsed.textHtml,
             attachments: parsed.attachments,
             inline: parsed.inline,
+            threadMembers: thread.messages.reverse(),
+            labelIds: parsed.labelIds,
+            threadId: threadId,
           };
+
+          console.log(".");
+          return email;
         })
       );
 
-      setEmails(detailedEmails);
-
-      console.log(detailedEmails);
+      setEmails(detailedEmails.flat());
     };
 
     fetchEmails();
   }, [session?.accessToken]);
 
-  async function handleSelectEmail(email: Email) {
-    if (!email.attachments) {
-      setSelectedEmail(email)
-      emailBox.current!.scrollTo(0,0)
-      return
-    }
+  useEffect(() => console.log(emails), [emails]);
 
+  async function parsedMessageToEmail(parsed: any) {
+    if (!session?.accessToken) return;
+
+    const headers = {
+      Authorization: `Bearer ${session.accessToken}`,
+      Accept: "application/json",
+    };
+
+    const threadId = parsed.threadId;
+
+    const threadRes = await fetch(
+      `https://gmail.googleapis.com/gmail/v1/users/me/threads/${threadId}`,
+      { headers }
+    );
+    const thread = await threadRes.json();
+
+    const email: Email = {
+      id: parsed.id,
+      snippet: parsed.snippet,
+      headers: parsed.headers,
+      textPlain: parsed.textPlain,
+      textHtml: parsed.textHtml,
+      attachments: parsed.attachments,
+      inline: parsed.inline,
+      threadId: threadId,
+      threadMembers: thread.messages.reverse(),
+      labelIds: parsed.labelIds,
+    };
+
+    return email;
+  }
+
+  async function addInlineAttachments(email: Email) {
     const attachmentDataArray = await Promise.all(
-      email.attachments.map(e => getAttachmentData(e.attachmentId,email)!)
-    )
+      email.attachments.map((e) => getAttachmentData(e.attachmentId, email)!)
+    );
 
     // Build cid → dataUrl map
     const cidMap = Object.fromEntries(
-      attachmentDataArray
-        .filter((a) => a.cid)
-        .map(({ cid, url }) => [cid, url])
+      attachmentDataArray.filter((a) => a.cid).map(({ cid, url }) => [cid, url])
     );
 
     // Replace cid links in the email HTML
@@ -161,15 +209,43 @@ function HomePage() {
       }
     );
 
-    let newEmail = email
+    let newEmail = email;
 
-    newEmail.textHtml = replacedHtml
+    newEmail.textHtml = replacedHtml;
+
+    return newEmail;
+  }
+
+  async function handleSelectEmail(email: Email) {
+    let newEmail = email;
+
+    const threadResults = await Promise.all(
+      newEmail.threadMembers.map(async (t) => {
+        const parsed = parsedMessageToEmail(parseMessage(t));
+
+        if (email.attachments) {
+          return addInlineAttachments((await parsed)!);
+        }
+
+        return parsed;
+      })
+    );
+
+    const threads = threadResults.filter((t): t is Email => t !== null);
+
+    newEmail.threadMembers = threads!;
+
+    if (!email.attachments) {
+      setSelectedEmail(newEmail);
+      emailBox.current!.scrollTo(0, 0);
+      return;
+    }
 
     setSelectedEmail(newEmail);
   }
 
   async function getAttachmentData(id: string, email: Email) {
-    if (!email) return {url:'',cid:''};
+    if (!email) return { url: "", cid: "" };
 
     const headers = {
       //@ts-ignore
@@ -197,7 +273,7 @@ function HomePage() {
       };
     }
 
-    return {url:'',cid:''}
+    return { url: "", cid: "" };
   }
 
   return (
@@ -220,7 +296,10 @@ function HomePage() {
                   <h3 className="text-3xl mb-2">Inbox</h3>
                 )}
               </CardTitle>
-              <CardContent className="overflow-y-auto max-h-[80vh] h-screen" ref={emailBox}>
+              <CardContent
+                className="overflow-y-auto max-h-[80vh] h-screen"
+                ref={emailBox}
+              >
                 {!selectedEmail ? (
                   emails.map((email, i) => (
                     <>
@@ -230,20 +309,22 @@ function HomePage() {
                         onClick={() => handleSelectEmail(email)}
                       >
                         <h4 className="text-sm leading-none font-medium">
-                          {email.headers.find((h) => h.name == "Subject")
-                            ?.value ?? "(No subject)"}
+                          {email.headers.subject ?? "(No subject)"}
+                          <span className="text-muted-foreground text-sm">
+                            &nbsp;
+                            {email.threadMembers.length != 1
+                              ? email.threadMembers.length
+                              : null}
+                          </span>
                         </h4>
                         <p className="absolute right-2 text-muted-foreground text-sm top-2">
-                          {formatDate(
-                            email.headers.find((h) => h.name == "Date")!.value
-                          )}
+                          {formatDate(email.headers.date)}
                         </p>
                         <p className="text-muted-foreground text-sm">
-                          {email.headers.find((h) => h.name == "From")?.value ??
-                            "(No subject)"}
+                          {email.headers.from}
                         </p>
                         <p className="text-muted-foreground text-sm mt-1">
-                          {email.snippet}
+                          {email.snippet.trimEnd()}
                           {email.snippet.length >= 198 && <>...</>}
                         </p>
                       </div>
@@ -253,13 +334,35 @@ function HomePage() {
                     </>
                   ))
                 ) : (
-                  <div className="m-3">
-                    <h1 className="text-3xl">
-                      {selectedEmail.headers.find((h) => h.name == "Subject")
-                        ?.value ?? "(No subject)"}
-                    </h1>
-                    <Separator className="my-4" />
-                    <ShadowHtml html={selectedEmail.textHtml} />
+                  <div>
+                    <div className="m-3">
+                      <h1 className="text-3xl">
+                        {selectedEmail.headers.subject ?? "(No subject)"}
+                      </h1>
+                    </div>
+                    {selectedEmail.threadMembers.map((email) => {
+                      return (
+                        <div className="m-3">
+                          <Separator className="my-4" />
+                          <p className="text-muted-foreground text-sm float-right">
+                            {formatDate(email.headers.date)}
+                          </p>
+                          <span className="flex gap-x-2">
+                            <Avatar>
+                              <AvatarFallback>
+                                <UserCircle2 />
+                              </AvatarFallback>
+                            </Avatar>
+                            {email.headers.from}
+                          </span>
+                          <p className="text-muted-foreground text-xs mb-2">
+                            To: {email.headers.to}
+                          </p>
+
+                          <ShadowHtml html={email.textHtml} />
+                        </div>
+                      );
+                    })}
                   </div>
                 )}
               </CardContent>
