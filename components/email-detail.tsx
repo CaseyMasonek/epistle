@@ -12,15 +12,16 @@ interface EmailDetailProps {
 }
 
 export function EmailDetail({ selectedEmail }: EmailDetailProps) {
-  const { getThread } = useEmailOperations();
+  const { getThread, markAsRead } = useEmailOperations();
   const [thread,setThread] = useState<Email[]>([])
 
   useEffect(() => {
     (async () => {
+      await markAsRead(selectedEmail)
       const threads = await getThread(selectedEmail)
       setThread(threads)
     })()
-  })
+  },[selectedEmail])
 
   return (
     <div>
@@ -33,7 +34,7 @@ export function EmailDetail({ selectedEmail }: EmailDetailProps) {
         if (!email?.headers) return []
 
         return (
-          <div className="m-3 relative">
+          <div className="m-3 relative overflow-x-clip">
             <Separator className="my-4" />
             <p className="text-muted-foreground text-sm float-right">
               {formatDate(email?.headers.date)}

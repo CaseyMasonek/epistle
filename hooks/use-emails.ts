@@ -17,7 +17,7 @@ export function useEmails() {
 
     const fetchEmails = async () => {
       const res = await fetch(
-        "https://gmail.googleapis.com/gmail/v1/users/me/messages?maxResults=20",
+        "https://gmail.googleapis.com/gmail/v1/users/me/messages?maxResults=10",
         { headers }
       );
       const list = await res.json();
@@ -29,7 +29,7 @@ export function useEmails() {
             `https://gmail.googleapis.com/gmail/v1/users/me/messages/${id}?format=full`,
             { headers }
           );
-          const detail = await detailRes.json();
+          let detail = await detailRes.json();
           const parsed = parseMessage(detail);
 
           const threadId = parsed.threadId;
@@ -47,6 +47,9 @@ export function useEmails() {
           if (parsed.id != newestMessageId) {
             return [];
           }
+
+          detail = parseMessage(thread.messages.find((t:any) => t.id == newestMessageId))
+
 
           const email: Email = {
             id: detail.id,

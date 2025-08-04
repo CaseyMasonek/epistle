@@ -1,6 +1,7 @@
 import { useSession } from "next-auth/react";
 import parseMessage from "gmail-api-parse-message";
 import { Email } from "@/types/email";
+import { json } from "stream/consumers";
 
 export function useEmailOperations() {
   const { data: session } = useSession();
@@ -94,7 +95,6 @@ export function useEmailOperations() {
   async function getThread(email: Email) {
     const threadResults = await Promise.all(
       email.threadMembers.map(async (t) => {
-
         const parsed = parsedMessageToEmail(parseMessage(t));
 
         if (email.attachments) {
@@ -110,10 +110,33 @@ export function useEmailOperations() {
     return threads;
   }
 
+  async function markAsRead(email: Email) {
+    console.log(email.labelIds)
+
+    const headers = {
+      //@ts-ignore
+      Authorization: `Bearer ${session!.accessToken}`,
+      Accept: "application/json",
+    };
+
+    fetch(
+      `https://gmail.googleapis.com/gmail/v1/users/me/messages/${email.id}/modify`,
+      {
+        headers: headers,
+        body: JSON.stringify({
+          addLabelIds: [],
+          removeLabelIds: ["UNREAD"],
+        }),
+        method: "POST",
+      }
+    );
+  }
+
   return {
     parsedMessageToEmail,
     addInlineAttachments,
     getAttachmentData,
     getThread,
+    markAsRead,
   };
 }

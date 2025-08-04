@@ -41,7 +41,6 @@ function HomePage() {
   const [selectedEmail, setSelectedEmail] = useState<Email>();
   const emailBox = useRef<HTMLDivElement>(null);
   const { emails } = useEmails();
-  const { parsedMessageToEmail, addInlineAttachments } = useEmailOperations();
 
   // Authorization
   useEffect(() => {
@@ -76,11 +75,11 @@ function HomePage() {
                 )}
               </CardTitle>
               <CardContent
-                className="overflow-y-auto max-h-[80vh] h-screen"
+                className="overflow-y-auto overflow-x-auto max-h-[80vh] h-screen"
                 ref={emailBox}
               >
                 {!selectedEmail ? (
-                  <EmailList emails={emails} onSelectEmail={handleSelectEmail} />
+                  <EmailList onSelectEmail={handleSelectEmail} />
                 ) : (
                   <EmailDetail selectedEmail={selectedEmail} />
                 )}

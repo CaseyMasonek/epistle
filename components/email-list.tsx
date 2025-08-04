@@ -1,14 +1,16 @@
 import { Separator } from "@/components/ui/separator";
+import { useEmails } from "@/hooks/use-emails";
 import { cleanSpaces, decodeHtml, formatDate } from "@/lib/utils";
 import { Email } from "@/types/email";
 import clsx from "clsx";
 
 interface EmailListProps {
-  emails: Email[];
   onSelectEmail: (email: Email) => void;
 }
 
-export function EmailList({ emails, onSelectEmail }: EmailListProps) {
+export function EmailList({ onSelectEmail }: EmailListProps) {
+  const {emails} = useEmails()
+
   return (
     <>
       {emails.map((email, i) => (
