@@ -8,10 +8,10 @@ import { useEffect } from "react";
 
 interface EmailListProps {
   onSelectEmail: (email: Email) => void
+  emails: Email[]
 }
 
-export function EmailList({ onSelectEmail }: EmailListProps) {
-  const {emails} = useEmails()
+export function EmailList({ onSelectEmail, emails }: EmailListProps) {
   const isMobile = useIsMobile()
 
   useEffect(() => console.log("!!",emails),[emails])

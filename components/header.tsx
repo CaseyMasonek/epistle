@@ -17,18 +17,15 @@ import {useDebouncedCallback} from 'use-debounce'
 import { useEmails } from "@/hooks/use-emails";
 import { useEffect } from "react";
 
-export default function Header({setEmails}:{setEmails:(emails:Email[]) => void}) {
+export default function Header({setQuery}:{setQuery:(q:string) => void}) {
   const { toggleSidebar } = useSidebar();
   const { setTheme } = useTheme();
   const isMobile = useIsMobile()
-  const {emails,setQuery} = useEmails()
 
   const search = useDebouncedCallback((q:string)=>{
     console.log(q)
     setQuery(q)
   },300)
-
-  useEffect(() => setEmails(emails),[emails])
 
   return (
     <div className="mb-3 w-full">

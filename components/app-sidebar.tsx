@@ -30,22 +30,22 @@ import {
 const items = [
   {
     title: "Primary",
-    url: "#",
     icon: Inbox,
+    q: 'category:primary'
   },
   {
     title: "All Mail",
-    url: "#",
     icon: MailsIcon,
+    q: 'in:anywhere'
   },
   {
     title: "Junk",
-    url: "#",
     icon: MailQuestionMark,
+    q:'in:spam'
   },
 ];
 
-export function AppSidebar() {
+export function AppSidebar({setQuery}:{setQuery:(q:string) => void}) {
   return (
     <Sidebar>
       <SidebarHeader>
@@ -82,7 +82,7 @@ export function AppSidebar() {
               {items.map((item) => (
                 <SidebarMenuItem key={item.title}>
                   <SidebarMenuButton asChild>
-                    <a href={item.url}>
+                    <a onClick={() => setQuery(item.q)}>
                       <item.icon />
                       <span>{item.title}</span>
                     </a>

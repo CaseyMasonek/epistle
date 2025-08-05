@@ -79,5 +79,5 @@ export function useEmails(pageToken?:string) {
     fetchEmails();
   }, [session?.accessToken,query]);
 
-  return { emails, status, nextPageToken, setQuery, setEmails };
+  return { emails, status, nextPageToken, setQuery, setEmails, query };
 } 
