@@ -6,7 +6,7 @@ import { Email } from "@/types/email";
 export function useEmails(pageToken?:string) {
   const { data: session, status } = useSession();
   const [emails, setEmails] = useState<Email[]>([]);
-  const [query,setQuery] = useState<String>()
+  const [query,setQuery] = useState<{page:string,search:string}>()
   const [nextPageToken,setNextPageToken] = useState<string>()
 
   useEffect(() => {
@@ -18,8 +18,18 @@ export function useEmails(pageToken?:string) {
     };
 
     const fetchEmails = async () => {
+      if (!query) {
+        setQuery({page:'',search:''})
+      }
+    
+      if (!query?.page) {
+        setQuery({...query!,page:'category:primary'})
+      }
+
+      const queryString = Object.values(query ?? []).join(" ")
+
       const pageTokenQuery = pageToken ? '&pageToken='+pageToken : ""
-      const queryQuery = query ? '&q='+query : ""
+      const queryQuery = query ? '&q='+queryString : ""
 
       const res = await fetch(
         `https://gmail.googleapis.com/gmail/v1/users/me/messages?maxResults=20`+queryQuery+pageTokenQuery,

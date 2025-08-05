@@ -47,11 +47,11 @@ function HomePage() {
 
   return (
     <SidebarProvider>
-      <AppSidebar setQuery={setQuery} />
+      <AppSidebar setQuery={setQuery} query={query} />
       <div className="w-full h-screen flex flex-row">
         <div className="w-full">
           <div className="">
-            <Header setQuery={setQuery} />
+            <Header setQuery={setQuery} query={query} />
             <Card className="m-5 gap-y-0 h-max">
               <CardTitle className="ml-9">
                 {selectedEmail ? (

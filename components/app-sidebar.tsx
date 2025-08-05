@@ -25,6 +25,9 @@ import {
   SidebarMenuItem,
 } from "@/components/ui/sidebar";
 
+import clsx from "clsx";
+import { usePathname } from "next/navigation";
+
 
 // Menu items.
 const items = [
@@ -41,11 +44,11 @@ const items = [
   {
     title: "Junk",
     icon: MailQuestionMark,
-    q:'in:spam'
+    q: 'in:spam'
   },
 ];
 
-export function AppSidebar({setQuery}:{setQuery:(q:string) => void}) {
+export function AppSidebar({ setQuery, query }: { setQuery: (params: any) => void; query: { page: string, search: string } | undefined }) {
   return (
     <Sidebar>
       <SidebarHeader>
@@ -55,21 +58,21 @@ export function AppSidebar({setQuery}:{setQuery:(q:string) => void}) {
       </SidebarHeader>
       <SidebarContent>
         <SidebarGroup>
-            <SidebarGroupLabel>
-                Main features
-            </SidebarGroupLabel>
+          <SidebarGroupLabel>
+            Main features
+          </SidebarGroupLabel>
           <SidebarMenu>
             <SidebarMenuItem>
               <SidebarMenuButton asChild>
                 <a href="#">
-                    <LayoutDashboard />
-                    <span>Dashboard</span>
+                  <LayoutDashboard />
+                  <span>Dashboard</span>
                 </a>
               </SidebarMenuButton>
               <SidebarMenuButton asChild>
                 <a href="#">
-                    <ChartBarIcon />
-                    <span>Analytics</span>
+                  <ChartBarIcon />
+                  <span>Analytics</span>
                 </a>
               </SidebarMenuButton>
             </SidebarMenuItem>
@@ -82,7 +85,7 @@ export function AppSidebar({setQuery}:{setQuery:(q:string) => void}) {
               {items.map((item) => (
                 <SidebarMenuItem key={item.title}>
                   <SidebarMenuButton asChild>
-                    <a onClick={() => setQuery(item.q)}>
+                    <a onClick={() => setQuery({ ...query, page: item.q })} className={clsx(query?.page == item.q ? "bg-accent" : "")}>
                       <item.icon />
                       <span>{item.title}</span>
                     </a>

@@ -13,19 +13,18 @@ import {
 } from "@/components/ui/dropdown-menu";
 import { useIsMobile } from "@/hooks/use-mobile";
 import { Email } from "@/types/email";
-import {useDebouncedCallback} from 'use-debounce'
+import { useDebouncedCallback } from 'use-debounce'
 import { useEmails } from "@/hooks/use-emails";
 import { useEffect } from "react";
 
-export default function Header({setQuery}:{setQuery:(q:string) => void}) {
+export default function Header({ setQuery, query }: { setQuery: (params: any) => void; query: { page: string, search: string } | undefined }) {
   const { toggleSidebar } = useSidebar();
   const { setTheme } = useTheme();
   const isMobile = useIsMobile()
 
-  const search = useDebouncedCallback((q:string)=>{
-    console.log(q)
-    setQuery(q)
-  },300)
+  const search = useDebouncedCallback((q: string) => {
+    setQuery({...query, search: q})
+  }, 300)
 
   return (
     <div className="mb-3 w-full">
