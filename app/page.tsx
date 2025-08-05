@@ -40,14 +40,11 @@ function HomePage() {
   const { data: session, status } = useSession();
   const [selectedEmail, setSelectedEmail] = useState<Email>();
   const emailBox = useRef<HTMLDivElement>(null);
-  const { emails } = useEmails();
+  const {emails,setEmails} = useEmails()
 
-  // Authorization
   useEffect(() => {
     if (status == "unauthenticated") redirect("/login");
   }, [status]);
-
-  useEffect(() => console.log(emails), [emails]);
 
   async function handleSelectEmail(email: Email) {
     setSelectedEmail(email);
@@ -60,7 +57,7 @@ function HomePage() {
       <div className="w-full h-screen flex flex-row">
         <div className="w-full">
           <div className="">
-            <Header />
+            <Header setEmails={setEmails} />
             <Card className="m-5 gap-y-0 h-max">
               <CardTitle className="ml-9">
                 {selectedEmail ? (
@@ -79,7 +76,7 @@ function HomePage() {
                 ref={emailBox}
               >
                 {!selectedEmail ? (
-                  <EmailList onSelectEmail={handleSelectEmail} />
+                  <EmailList emails={emails} setEmails={setEmails} onSelectEmail={handleSelectEmail} />
                 ) : (
                   <EmailDetail selectedEmail={selectedEmail} />
                 )}

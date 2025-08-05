@@ -50,7 +50,7 @@ export function AppSidebar() {
     <Sidebar>
       <SidebarHeader>
         <div className="w-full flex items-center justify-center h-11">
-          <h1 className="text-2xl">Eloquent</h1>
+          <h1 className="text-2xl">App Name</h1>
         </div>
       </SidebarHeader>
       <SidebarContent>

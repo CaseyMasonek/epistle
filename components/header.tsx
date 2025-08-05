@@ -11,18 +11,32 @@ import {
   DropdownMenuItem,
   DropdownMenuTrigger,
 } from "@/components/ui/dropdown-menu";
+import { useIsMobile } from "@/hooks/use-mobile";
+import { Email } from "@/types/email";
+import {useDebouncedCallback} from 'use-debounce'
+import { useEmails } from "@/hooks/use-emails";
+import { useEffect } from "react";
 
-export default function Header() {
+export default function Header({setEmails}:{setEmails:(emails:Email[]) => void}) {
   const { toggleSidebar } = useSidebar();
   const { setTheme } = useTheme();
+  const isMobile = useIsMobile()
+  const {emails,setQuery} = useEmails()
+
+  const search = useDebouncedCallback((q:string)=>{
+    console.log(q)
+    setQuery(q)
+  },300)
+
+  useEffect(() => setEmails(emails),[emails])
 
   return (
     <div className="mb-3 w-full">
       <div className="p-5 h-15 flex items-center w-full">
-        <MenuIcon className="mr-5" onClick={toggleSidebar} />
-        <Input placeholder="Search" />
+        <MenuIcon className="mr-5" onClick={toggleSidebar} size={isMobile ? 48 : 32} />
+        <Input placeholder="Search" onChange={(e) => search(e.currentTarget.value)} />
         <DropdownMenu>
-          <DropdownMenuTrigger asChild className="mx-5">
+          <DropdownMenuTrigger asChild className="mx-2">
             <Button variant="outline" size="icon">
               <SunIcon className="h-[1.2rem] w-[1.2rem] scale-100 rotate-0 transition-all dark:scale-0 dark:-rotate-90" />
               <MoonIcon className="absolute h-[1.2rem] w-[1.2rem] scale-0 rotate-90 transition-all dark:scale-100 dark:rotate-0" />

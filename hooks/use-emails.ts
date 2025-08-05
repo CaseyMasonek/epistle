@@ -3,9 +3,11 @@ import { useEffect, useState } from "react";
 import parseMessage from "gmail-api-parse-message";
 import { Email } from "@/types/email";
 
-export function useEmails() {
+export function useEmails(pageToken?:string) {
   const { data: session, status } = useSession();
   const [emails, setEmails] = useState<Email[]>([]);
+  const [query,setQuery] = useState<String>()
+  const [nextPageToken,setNextPageToken] = useState<string>()
 
   useEffect(() => {
     if (!session?.accessToken) return;
@@ -16,12 +18,16 @@ export function useEmails() {
     };
 
     const fetchEmails = async () => {
+      const pageTokenQuery = pageToken ? '&pageToken='+pageToken : ""
+      const queryQuery = query ? '&q='+query : ""
+
       const res = await fetch(
-        "https://gmail.googleapis.com/gmail/v1/users/me/messages?maxResults=10",
+        `https://gmail.googleapis.com/gmail/v1/users/me/messages?maxResults=20`+queryQuery+pageTokenQuery,
         { headers }
       );
       const list = await res.json();
       const messages = list.messages || [];
+      setNextPageToken(list.nextPageToken)
 
       const detailedEmails = await Promise.all(
         messages.map(async ({ id }: { id: string }): Promise<Email | []> => {
@@ -50,7 +56,6 @@ export function useEmails() {
 
           detail = parseMessage(thread.messages.find((t:any) => t.id == newestMessageId))
 
-
           const email: Email = {
             id: detail.id,
             snippet: detail.snippet,
@@ -72,7 +77,7 @@ export function useEmails() {
     };
 
     fetchEmails();
-  }, [session?.accessToken]);
+  }, [session?.accessToken,query]);
 
-  return { emails, status };
+  return { emails, status, nextPageToken, setQuery, setEmails };
 } 

@@ -37,7 +37,7 @@ export function EmailDetail({ selectedEmail }: EmailDetailProps) {
           <div className="m-3 relative overflow-x-clip">
             <Separator className="my-4" />
             <p className="text-muted-foreground text-sm float-right">
-              {formatDate(email?.headers.date)}
+              {formatDate(email.headers.date)}
             </p>
             <span className="flex gap-x-2">
               <Avatar className="">
